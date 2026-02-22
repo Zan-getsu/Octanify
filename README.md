@@ -38,7 +38,7 @@
 
 ### Blender 4.2+ / 5.0 (Extension System)
 1. Download `octanify.zip`
-2. Open Blender → `Edit → Preferences → Extensions`
+2. Open Blender → `Edit → Preferences → Add-ons`
 3. Click the dropdown arrow → **Install from Disk**
 4. Select `octanify.zip`
 5. Enable **Octanify**
