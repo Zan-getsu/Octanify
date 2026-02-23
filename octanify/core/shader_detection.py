@@ -79,9 +79,12 @@ class TreeAnalysis:
 # These node types are "transparent" — links pass through them.
 # During link analysis, when a link's from_node is one of these,
 # we trace backward to find the real source (like reroute flattening).
-# This includes color adjustment nodes with no reliable Octane equivalent.
+#
+# IMPORTANT: Only nodes that have NO Octane equivalent belong here.
+# Nodes like Math, Clamp, Invert, HueSat, BrightContrast, Gamma,
+# and RGBCurves have valid Octane mappings and MUST be analyzed normally.
 _TRANSPARENT_TYPES: set[str] = {
-    # Channel split / combine nodes
+    # Channel split / combine nodes — no direct Octane equivalent
     "ShaderNodeSeparateColor",
     "ShaderNodeSeparateRGB",
     "ShaderNodeSeparateXYZ",
@@ -91,16 +94,6 @@ _TRANSPARENT_TYPES: set[str] = {
     # Info nodes with no Octane equivalent
     "ShaderNodeNewGeometry",
     "ShaderNodeLightPath",
-    # Color adjustment nodes — pass texture through if Octane creation fails
-    "ShaderNodeRGBCurves",
-    "ShaderNodeHueSaturation",
-    "ShaderNodeBrightContrast",
-    "ShaderNodeGamma",
-    # Math / utility nodes — pass texture through
-    "ShaderNodeMath",
-    "ShaderNodeMapRange",
-    "ShaderNodeClamp",
-    "ShaderNodeInvert",
 }
 
 
@@ -207,6 +200,13 @@ _PROPERTY_KEYS: dict[str, list[str]] = {
     "ShaderNodeAttribute": ["attribute_name", "attribute_type"],
     "ShaderNodeUVMap": ["uv_map"],
     "ShaderNodeVertexColor": ["layer_name"],
+    "ShaderNodeTexEnvironment": ["interpolation", "projection", "color_space"],
+    "ShaderNodeTexMagic": ["turbulence_depth"],
+    "ShaderNodeTexSky": ["sky_type", "sun_direction", "turbidity", "ground_albedo", "sun_dust", "air_density", "dust_density", "ozone_density"],
+    "ShaderNodeTexWhiteNoise": ["noise_dimensions"],
+    "ShaderNodeTexGabor": ["gabor_type"],
+    "ShaderNodeVectorMath": ["operation"],
+    "ShaderNodeGroup": ["node_tree"],
 }
 
 
@@ -239,6 +239,10 @@ def _snapshot_properties(node: bpy.types.Node, info: NodeInfo) -> None:
                 "color": tuple(elem.color),
             })
         info.properties["stops"] = stops
+
+    # NodeGroup special handling
+    if node.bl_idname == "ShaderNodeGroup" and getattr(node, "node_tree", None):
+        info.properties["node_tree_name"] = node.node_tree.name
 
 
 # ---------------------------------------------------------------------------
@@ -333,7 +337,10 @@ def analyze_tree(node_tree: bpy.types.NodeTree) -> TreeAnalysis:
         if bid == "ShaderNodeEmission":
             analysis.has_emission = True
 
-        if bid in ("ShaderNodeVolumeAbsorption", "ShaderNodeVolumeScatter"):
+        if bid == "ShaderNodeBlackbody":
+            analysis.has_emission = True
+
+        if bid in ("ShaderNodeVolumeAbsorption", "ShaderNodeVolumeScatter", "ShaderNodeVolumePrincipled"):
             analysis.has_volume = True
 
         if bid == "ShaderNodeBump":
@@ -342,8 +349,14 @@ def analyze_tree(node_tree: bpy.types.NodeTree) -> TreeAnalysis:
         if bid == "ShaderNodeNormalMap":
             analysis.has_normal_map = True
 
-        if bid == "ShaderNodeDisplacement":
+        if bid in ("ShaderNodeDisplacement", "ShaderNodeVectorDisplacement"):
             analysis.has_displacement = True
+
+        if bid == "ShaderNodeSubsurfaceScattering":
+            analysis.has_sss = True
+
+        if bid in ("ShaderNodeBsdfMetallic", "ShaderNodeBsdfSheen", "ShaderNodeBsdfToon", "ShaderNodeBsdfHair", "ShaderNodeBsdfHairPrincipled"):
+            pass  # Future proofing for specialized flags if needed
 
     # ── Snapshot links (flatten reroutes + transparents, deduplicate) ─────
     seen_links: set[tuple[str, str, str, str]] = set()

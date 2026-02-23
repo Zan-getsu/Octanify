@@ -32,8 +32,9 @@ log = get_logger()
 class GraphEngine:
     """Walks a TreeAnalysis and produces an ordered conversion schedule."""
 
-    def __init__(self, analysis: "TreeAnalysis") -> None:
+    def __init__(self, analysis: "TreeAnalysis", group_converter_cb=None) -> None:
         self.analysis = analysis
+        self.group_converter_cb = group_converter_cb
         # Ordered list of node names to convert (dependencies first)
         self._schedule: list[str] = []
         self._visited: set[str] = set()
@@ -133,6 +134,18 @@ class GraphEngine:
                         pass
                     existing.location = info.location
                     node_map[node_name] = existing
+                elif bl_id == "ShaderNodeGroup":
+                    new_node = target_tree.nodes.new("ShaderNodeGroup")
+                    new_node.location = info.location
+                    if self.group_converter_cb and "node_tree_name" in getattr(info, "properties", {}):
+                        orig_tree_name = info.properties["node_tree_name"]
+                        import bpy
+                        orig_tree = bpy.data.node_groups.get(orig_tree_name)
+                        if orig_tree:
+                            new_tree = self.group_converter_cb(orig_tree)
+                            if new_tree:
+                                new_node.node_tree = new_tree
+                    node_map[node_name] = new_node
                 continue
 
             # MixRGB / Mix: check blend_type for specialised node

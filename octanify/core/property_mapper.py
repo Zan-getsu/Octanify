@@ -119,18 +119,26 @@ def _transfer_principled(info: "NodeInfo", node: "bpy.types.Node") -> None:
         ("Base Color",           "Albedo color", "Albedo", "Diffuse"),
         ("Metallic",             "Metallic", "Metallic float"),
         ("Roughness",            "Roughness", "Roughness float"),
+        ("Diffuse Roughness",    "Roughness", "Roughness float", "Diffuse roughness"),
         ("Specular IOR Level",   "Specular", "Specular float"),
+        ("Specular Tint",        "Specular tint", "Specular map", "Specular color"),
         ("IOR",                  "Dielectric IOR", "Index", "IOR"),
         ("Alpha",                "Opacity", "Opacity float"),
+        ("Tangent",              "Anisotropy rotation", "Rotation"),
         ("Coat Weight",          "Coating", "Coating float"),
         ("Coat Roughness",       "Coating roughness", "Coating roughness float"),
+        ("Coat IOR",             "Coating IOR"),
+        ("Coat Tint",            "Coating", "Coating color"),
         ("Sheen Weight",         "Sheen", "Sheen float"),
         ("Sheen Roughness",      "Sheen roughness", "Sheen roughness float"),
+        ("Sheen Tint",           "Sheen", "Sheen color", "Sheen tint"),
         ("Anisotropic",          "Anisotropy", "Anisotropy float"),
         ("Anisotropic Rotation", "Anisotropy rotation", "Rotation"),
         ("Thin Film Thickness",  "Film width", "Thin film thickness"),
         ("Thin Film IOR",        "Film IOR", "Thin film IOR"),
         ("Subsurface Weight",    "SSS", "Subsurface"),
+        ("Subsurface IOR",       "Index", "IOR"),
+        ("Subsurface Anisotropy", "Anisotropy", "Subsurface anisotropy"),
     ]
 
     for mapping in _simple_transfers:
@@ -254,7 +262,15 @@ def _transfer_image_texture(info: "NodeInfo", node: "bpy.types.Node") -> None:
 
     # Colorspace → gamma
     cs = info.properties.get("colorspace", "sRGB")
-    if cs == "Non-Color" or cs == "Linear" or cs == "Raw":
+    
+    # Comprehensive linear space detection matching Blender's internal colormanagement
+    linear_spaces = {
+        "Non-Color", "Linear", "Raw", "Utility - Linear - sRGB", 
+        "Utility - Raw", "Linear ACES", "Utility - Linear - Rec.709"
+    }
+    is_linear = cs in linear_spaces or cs.lower().startswith("linear")
+    
+    if is_linear:
         # Set gamma to 1.0 (linear)
         _set_input(node, ["Gamma", "Power", "Legacy gamma"], 1.0)
         _set_prop(node, "gamma", 1.0)
@@ -525,6 +541,96 @@ def _transfer_volume_scatter(info: "NodeInfo", node: "bpy.types.Node") -> None:
                _get_input_value(info, "Anisotropy", 0.0))
 
 
+# ---------------------------------------------------------------------------
+# New Node Handlers
+# ---------------------------------------------------------------------------
+
+def _transfer_metallic(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Albedo color", "Albedo", "Diffuse"], _get_input_value(info, "Base Color", (1,1,1,1)))
+    _set_input(node, ["Specular", "Specular color", "Specular map"], _get_input_value(info, "Edge Tint", (1,1,1,1)))
+    _set_input(node, ["Roughness", "Roughness float"], _get_input_value(info, "Roughness", 0.0))
+    _set_input(node, ["Anisotropy", "Anisotropy float"], _get_input_value(info, "Anisotropy", 0.0))
+    _set_input(node, ["Anisotropy rotation", "Rotation"], _get_input_value(info, "Rotation", 0.0))
+
+
+def _transfer_sheen(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Albedo color", "Albedo", "Diffuse"], _get_input_value(info, "Color", (1,1,1,1)))
+    _set_input(node, ["Roughness", "Roughness float"], _get_input_value(info, "Roughness", 0.0))
+
+
+def _transfer_toon(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Albedo color", "Albedo", "Diffuse"], _get_input_value(info, "Color", (1,1,1,1)))
+    _set_input(node, ["Roughness", "Roughness float"], _get_input_value(info, "Size", 0.5))
+
+
+def _transfer_sss_standalone(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Albedo color", "Albedo", "Diffuse", "Absorption"], _get_input_value(info, "Color", (0.8,0.8,0.8,1.0)))
+    _set_input(node, ["Density", "Medium scale"], _get_input_value(info, "Scale", 1.0))
+    _set_input(node, ["Absorption", "Medium radius"], _get_input_value(info, "Radius", (1,1,1)))
+    _set_input(node, ["Index", "IOR"], _get_input_value(info, "IOR", 1.4))
+    _set_input(node, ["Roughness", "Roughness float"], _get_input_value(info, "Roughness", 0.0))
+    _set_input(node, ["Anisotropy", "Anisotropy float"], _get_input_value(info, "Anisotropy", 0.0))
+
+
+def _transfer_environment(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    img = info.properties.get("image")
+    if img is not None:
+        _set_prop(node, "image", img)
+    proj = info.properties.get("projection", "EQUIRECTANGULAR")
+    if proj == "MIRROR_BALL":
+        _set_prop(node, "projection", "SPHERICAL")
+
+
+def _transfer_magic_texture(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Scale"], _get_input_value(info, "Scale", 5.0))
+    _set_input(node, ["Distortion"], _get_input_value(info, "Distortion", 1.0))
+    depth = info.properties.get("turbulence_depth", 2)
+    _set_input(node, ["Detail"], depth)
+
+
+def _transfer_sky_texture(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Sun direction"], _get_input_value(info, "Sun Direction", (0,0,1)))
+    _set_input(node, ["Turbidity"], _get_input_value(info, "Turbidity", 2.2))
+
+
+def _transfer_white_noise(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["W"], _get_input_value(info, "W", 0.0))
+
+
+def _transfer_vector_math(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    v1 = _get_input_value(info, "Vector")
+    if v1 is not None:
+        _set_input(node, ["Texture1", "Color1", "Input1", "A"], v1)
+    
+    v2 = _get_input_value(info, "Vector_001")
+    if v2 is None:
+        vals = [v for k, v in info.inputs.items() if k.startswith("Vector")]
+        if len(vals) > 1:
+            v2 = vals[1]
+    if v2 is not None:
+        _set_input(node, ["Texture2", "Color2", "Input2", "B"], v2)
+    
+    s = _get_input_value(info, "Scale")
+    if s is not None:
+        _set_input(node, ["Amount", "Factor", "Value2", "B"], s)
+
+
+def _transfer_blackbody(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Temperature"], _get_input_value(info, "Temperature", 1500.0))
+
+
+def _transfer_rgb_to_bw(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Saturation"], 0.0)
+
+
+def _transfer_volume_principled(info: "NodeInfo", node: "bpy.types.Node") -> None:
+    _set_input(node, ["Absorption", "Color"], _get_input_value(info, "Color", (1,1,1,1)))
+    _set_input(node, ["Density", "Density float"], _get_input_value(info, "Density", 1.0))
+    _set_input(node, ["Phase", "Anisotropy"], _get_input_value(info, "Anisotropy", 0.0))
+    _set_input(node, ["Emission", "Emission color"], _get_input_value(info, "Emission Color", (0,0,0,1)))
+    _set_input(node, ["Emission power", "Power"], _get_input_value(info, "Emission Strength", 0.0))
+
+
 def _transfer_generic(info: "NodeInfo", node: "bpy.types.Node") -> None:
     """Fallback: try to match inputs by identifier or display name."""
     for sock_id, value in info.inputs.items():
@@ -594,4 +700,21 @@ _HANDLERS: dict[str, callable] = {
     "ShaderNodeRGBCurves": lambda info, node: None,  # complex, best-effort
     "ShaderNodeNewGeometry": lambda info, node: None,
     "ShaderNodeLightPath": lambda info, node: None,
+
+    # New handlers
+    "ShaderNodeBsdfMetallic": _transfer_metallic,
+    "ShaderNodeBsdfSheen": _transfer_sheen,
+    "ShaderNodeBsdfToon": _transfer_toon,
+    "ShaderNodeBsdfHair": _transfer_principled, # Hair mapping varies, but principled works as a fallback
+    "ShaderNodeBsdfHairPrincipled": _transfer_principled,
+    "ShaderNodeSubsurfaceScattering": _transfer_sss_standalone,
+    "ShaderNodeTexEnvironment": _transfer_environment,
+    "ShaderNodeTexMagic": _transfer_magic_texture,
+    "ShaderNodeTexSky": _transfer_sky_texture,
+    "ShaderNodeTexWhiteNoise": _transfer_white_noise,
+    "ShaderNodeTexGabor": _transfer_white_noise,
+    "ShaderNodeVectorMath": _transfer_vector_math,
+    "ShaderNodeBlackbody": _transfer_blackbody,
+    "ShaderNodeRGBToBW": _transfer_rgb_to_bw,
+    "ShaderNodeVolumePrincipled": _transfer_volume_principled,
 }

@@ -581,8 +581,163 @@ def _apply_scale_correction(
                 pass
 
 
+def convert_node_group(
+    group_tree: bpy.types.NodeTree,
+    gamma_value: float = 2.2,
+) -> bpy.types.NodeTree | None:
+    """Convert a ShaderNodeTree used by a NodeGroup."""
+    if group_tree is None:
+        return None
+
+    tree_name = group_tree.name
+    cache_key = f"GRP_{tree_name}"
+    
+    if _cache.has_material(cache_key):
+        cached_name = _cache.get_converted_material_name(cache_key)
+        return bpy.data.node_groups.get(cached_name)
+
+    log.info("Converting node group: %s", tree_name)
+    analysis = analyze_tree(group_tree)
+
+    new_tree_name = f"{tree_name}_OCTANE"
+    if new_tree_name in bpy.data.node_groups:
+        new_tree = bpy.data.node_groups[new_tree_name]
+    else:
+        new_tree = group_tree.copy()
+        new_tree.name = new_tree_name
+
+    # Clear all but I/O nodes
+    to_remove = [n for n in new_tree.nodes if n.bl_idname not in ("NodeGroupInput", "NodeGroupOutput")]
+    for n in to_remove:
+        new_tree.nodes.remove(n)
+
+    engine = GraphEngine(
+        analysis, 
+        group_converter_cb=lambda t: convert_node_group(t, gamma_value)
+    )
+    node_map = engine.create_nodes(new_tree)
+
+    # Re-register I/O nodes for link mapping
+    for n in new_tree.nodes:
+        if n.bl_idname in ("NodeGroupInput", "NodeGroupOutput"):
+            node_map[n.name] = n
+
+    for node_name, oct_node in node_map.items():
+        if oct_node.bl_idname in ("NodeGroupInput", "NodeGroupOutput"):
+            continue
+        info = analysis.nodes.get(node_name)
+        if info is not None:
+            try:
+                transfer_properties(info, oct_node)
+            except Exception as exc:
+                log.warning("Property transfer failed for '%s' in group '%s': %s", node_name, tree_name, exc)
+
+    _rebuild_links(analysis, node_map, new_tree)
+    _handle_normal_map_fallback(analysis, node_map, new_tree)
+    _fix_mix_shader_links(analysis, node_map, new_tree)
+    _handle_alpha(analysis, node_map, new_tree)
+    
+    _preserve_drivers(group_tree, analysis, node_map, new_tree)
+    
+    _cache.register_material(cache_key, new_tree.name)
+    return new_tree
+
+
+def _apply_scale_correction(
+    obj: bpy.types.Object | None,
+    node_map: dict[str, bpy.types.Node],
+    analysis: TreeAnalysis,
+) -> None:
+    """Scale adjustment code here..."""
+    pass
+
 # ---------------------------------------------------------------------------
-# Public API — convert a single material
+# Driver Data Preservation
+# ---------------------------------------------------------------------------
+
+def _preserve_drivers(
+    orig_tree: bpy.types.NodeTree,
+    analysis: TreeAnalysis,
+    node_map: dict[str, bpy.types.Node],
+    target_tree: bpy.types.NodeTree,
+) -> None:
+    """Attempt to preserve drivers by rebinding data paths to new Octane sockets."""
+    anim_data = getattr(orig_tree, "animation_data", None)
+    if not anim_data or not getattr(anim_data, "drivers", None):
+        return
+        
+    import re
+    
+    for driver in anim_data.drivers:
+        dp = driver.data_path
+        match = re.search(r'nodes\["([^"]+)"\]\.(inputs|outputs)\[(\d+|"[^"]+")\]\.default_value', dp)
+        if not match:
+            continue
+            
+        node_name, io_type, idx_str = match.groups()
+        oct_node = node_map.get(node_name)
+        orig_info = analysis.nodes.get(node_name)
+        if not oct_node or not orig_info:
+            continue
+            
+        orig_socket_name = ""
+        is_output_driven = (io_type == "outputs")
+        
+        if idx_str.startswith('"'):
+            orig_socket_name = idx_str.strip('"')
+        else:
+            try:
+                idx = int(idx_str)
+                orig_node = orig_tree.nodes.get(node_name)
+                if orig_node:
+                    collection = orig_node.outputs if is_output_driven else orig_node.inputs
+                    if len(collection) > idx:
+                        orig_socket_name = collection[idx].name
+            except ValueError:
+                pass
+                
+        oct_idx = -1
+        if is_output_driven and orig_info.bl_idname == "ShaderNodeValue":
+            # Value nodes are driven on their output in Cycles, but Octane expects input 0 to be driven.
+            oct_idx = 0
+        elif not is_output_driven and orig_socket_name:
+            oct_socket = resolve_input_socket(orig_info.bl_idname, orig_socket_name, oct_node)
+            if oct_socket:
+                for i, s in enumerate(oct_node.inputs):
+                    if s == oct_socket:
+                        oct_idx = i
+                        break
+                        
+        if oct_idx == -1:
+            continue
+            
+        new_dp = f'nodes["{oct_node.name}"].inputs[{oct_idx}].default_value'
+        
+        try:
+            if not target_tree.animation_data:
+                target_tree.animation_data_create()
+            d = target_tree.driver_add(new_dp, driver.array_index)
+            d.driver.type = driver.driver.type
+            d.driver.expression = driver.driver.expression
+            
+            for var in driver.driver.variables:
+                new_var = d.driver.variables.new()
+                new_var.name = var.name
+                new_var.type = var.type
+                for i, target in enumerate(var.targets):
+                    new_target = new_var.targets[i]
+                    new_target.id = target.id
+                    new_target.data_path = target.data_path
+                    new_target.transform_type = target.transform_type
+                    new_target.transform_space = target.transform_space
+                    if hasattr(target, "id_type"):
+                        new_target.id_type = target.id_type
+        except Exception as exc:
+            log.warning("Failed to preserve driver for '%s': %s", dp, exc)
+
+
+# ---------------------------------------------------------------------------
+# Node Group Conversion
 # ---------------------------------------------------------------------------
 
 def convert_material(
@@ -621,7 +776,10 @@ def convert_material(
     _clear_tree_except_output(new_mat.node_tree)
 
     # 4. Build schedule and create nodes
-    engine = GraphEngine(analysis)
+    engine = GraphEngine(
+        analysis,
+        group_converter_cb=lambda t: convert_node_group(t, gamma_value)
+    )
     node_map = engine.create_nodes(new_mat.node_tree)
 
     # 5. Transfer properties
@@ -657,8 +815,11 @@ def convert_material(
 
     # 12. Scale correction
     _apply_scale_correction(obj, node_map, analysis)
+    
+    # 13. Preserve drivers
+    _preserve_drivers(mat.node_tree, analysis, node_map, new_mat.node_tree)
 
-    # 13. Register in cache
+    # 14. Register in cache
     _cache.register_material(mat_name, new_mat.name)
 
     log.info("Successfully converted '%s' → '%s'", mat_name, new_mat.name)

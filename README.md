@@ -23,6 +23,8 @@
 | Feature | Description |
 |---|---|
 | 🎯 **Principled BSDF** | Full 20+ input mapping to Universal Material |
+| 🪆 **Node Groups** | Recursively converts and preserves nested Node Groups |
+| 🎬 **Driver Preservation** | Automatically transfers `#frame` expressions and animation drivers |
 | 🔗 **Link Reconstruction** | Rebuilds all node connections with 7-strategy socket matching |
 | 🪟 **Glass & Transmission** | Auto-detects transmission > 0.5 and configures specular mode |
 | 💡 **Emission** | Auto-inserts Octane TextureEmission node for proper emission rendering |
@@ -32,7 +34,7 @@
 | 📦 **Batch Conversion** | Convert active object or entire scene in one click |
 | 🔄 **Smart Deduplication** | Caches converted materials — no duplicate work |
 | 📐 **Scale Correction** | Adjusts procedural textures for object scale |
-| 🧩 **Transparent Passthrough** | SeparateColor, Math, RGB Curves pass through cleanly |
+| 🧮 **Math & Color Logic** | Deep mapping for Math, Vector Math, Map Range, and RGB curves |
 
 ## Installation
 
@@ -88,56 +90,79 @@ After conversion, you can re-adjust gamma at any time:
 ## Supported Nodes
 
 <details>
-<summary><strong>Shaders (9 types)</strong></summary>
+<summary><strong>Shaders (15+ types)</strong></summary>
 
 - Principled BSDF → Universal Material
 - Glass BSDF → Specular Material
 - Glossy BSDF → Glossy Material
 - Diffuse BSDF → Diffuse Material
+- Metallic BSDF → Metallic Material
+- Toon BSDF → Toon Material
+- Sheen BSDF → Universal Material
+- Hair BSDF / Principled Hair → Hair Material
+- Subsurface Scattering (standalone) → Universal Material
 - Emission → Diffuse Material + TextureEmission
 - Transparent BSDF → Null Material
 - Translucent BSDF → Diffuse Material
 - Refraction BSDF → Specular Material
-- Mix Shader → Mix Material (with auto slot swap)
+- Holdout / Ray Portal / Background → Support mapped
+- Mix Shader / Add Shader → Mix Material (with auto slot swap)
 </details>
 
 <details>
-<summary><strong>Textures (8 types)</strong></summary>
+<summary><strong>Textures (11 types)</strong></summary>
 
-- Image Texture → Octane Image Texture (with colorspace/gamma handling)
-- Noise → Octane Noise
+- Image Texture → Octane Image Texture (with strict colorspace/packed-file handling)
+- Environment / Sky Texture → Octane Image / Daylight Env
+- Noise / Musgrave / White Noise → Octane Noise
 - Voronoi → Octane Voronoi
 - Wave → Octane Wave
-- Musgrave → Octane Noise
 - Checker → Octane Checks
-- Brick → Octane Marble
+- Brick / Magic → Octane Marble
 - Gradient → Octane Gradient
 </details>
 
 <details>
-<summary><strong>Input / Vector (12 types)</strong></summary>
+<summary><strong>Input / Vector (15+ types)</strong></summary>
 
-- Mapping → 3D Transform
-- Texture Coordinate → Mesh UV Projection
-- UV Map → Mesh UV Projection
-- Normal Map → direct connection to Normal input
+- Mapping / Vector Rotate / Transform → 3D Transform
+- Texture Coordinate / UV Map → Mesh UV Projection
+- Normal Map / Normal / Tangent → direct connection to Normal input
 - Bump → Octane Bump Texture
-- Displacement → Octane Displacement
-- RGB → Octane RGB Color
+- Displacement / Vector Displacement → Octane Displacement
+- RGB / Wavelength → Octane RGB Color
 - Value → Octane Float Value
 - Fresnel / Layer Weight → Octane Fresnel
 - Vertex Color → Octane Color Vertex Attribute
 - Attribute → Octane Attribute
 - Ambient Occlusion → Octane Dirt Texture
+- Object / Camera / Hair / Particle Info → Float/Instance Data values
 </details>
 
 <details>
-<summary><strong>Transparent Passthrough (handled inline)</strong></summary>
+<summary><strong>Color & Math (12+ types)</strong></summary>
 
-- Separate Color / RGB / XYZ — flattened, source texture passes through
-- Combine Color / RGB / XYZ — flattened
-- RGB Curves, Hue/Saturation, Brightness/Contrast, Gamma — passthrough
-- Math, Map Range, Clamp, Invert — passthrough
+- Math / Vector Math → Mapped to specific Add/Multiply/Math nodes based on inner operation
+- Map Range → Octane Range
+- Clamp → Octane Clamp
+- Invert / Hue Saturation / Brightness Contrast / Gamma / RGB Curves → Octane Color Correction & Gamma nodes
+- RGBToBW / Blackbody / ShaderToRGB → Fully mapped
+</details>
+
+<details>
+<summary><strong>Volumetrics</strong></summary>
+
+- Volume Absorption → Octane Absorption Medium
+- Volume Scatter → Octane Scattering Medium
+- Volume Principled → Octane Volume Medium
+</details>
+
+<details>
+<summary><strong>Passthrough & Logic</strong></summary>
+
+- Node Groups / Group Input / Group Output — deeply traversed, flattened, and rebuilt
+- Separate Color / RGB / XYZ — handled inline
+- Combine Color / RGB / XYZ — handled inline
 </details>
 
 ## Project Structure

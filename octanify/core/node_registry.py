@@ -53,6 +53,49 @@ NODE_TYPE_MAP: dict[str, list[str]] = {
         "ShaderNodeOctMixMat",
         "OctaneMixMaterial",
     ],
+    "ShaderNodeBsdfMetallic": [
+        "ShaderNodeOctMetallicMat",
+        "OctaneMetallicMaterial",
+        "ShaderNodeOctUniversalMat",
+    ],
+    "ShaderNodeBsdfSheen": [
+        "ShaderNodeOctUniversalMat",
+        "OctaneUniversalMaterial",
+    ],
+    "ShaderNodeBsdfToon": [
+        "ShaderNodeOctToonMat",
+        "OctaneToonMaterial",
+    ],
+    "ShaderNodeBsdfHair": [
+        "ShaderNodeOctHairMat",
+        "OctaneHairMaterial",
+        "ShaderNodeOctUniversalMat",
+    ],
+    "ShaderNodeBsdfHairPrincipled": [
+        "ShaderNodeOctHairMat",
+        "OctaneHairMaterial",
+        "ShaderNodeOctUniversalMat",
+    ],
+    "ShaderNodeBsdfRayPortal": [
+        "ShaderNodeOctNullMat",
+        "OctaneNullMaterial",
+    ],
+    "ShaderNodeSubsurfaceScattering": [
+        "ShaderNodeOctUniversalMat",
+        "OctaneUniversalMaterial",
+    ],
+    "ShaderNodeBackground": [
+        "ShaderNodeOctDiffuseMat",
+        "OctaneDiffuseMaterial",
+    ],
+    "ShaderNodeHoldout": [
+        "ShaderNodeOctNullMat",
+        "OctaneNullMaterial",
+    ],
+    "ShaderNodeEeveeSpecular": [
+        "ShaderNodeOctSpecularMat",
+        "OctaneSpecularMaterial",
+    ],
 
     # ── Textures ─────────────────────────────────────────────────────────
     "ShaderNodeTexImage": [
@@ -87,6 +130,27 @@ NODE_TYPE_MAP: dict[str, list[str]] = {
     "ShaderNodeTexGradient": [
         "ShaderNodeOctGradientTex",
         "OctaneGradientTexture",
+    ],
+    "ShaderNodeTexEnvironment": [
+        "ShaderNodeOctImageTex",
+        "OctaneImageTexture",
+        "OctaneRGBImage",
+    ],
+    "ShaderNodeTexMagic": [
+        "ShaderNodeOctMarbleTex",
+        "OctaneMarbleTexture",
+    ],
+    "ShaderNodeTexSky": [
+        "ShaderNodeOctDaylightEnv",
+        "OctaneDaylightEnvironment",
+    ],
+    "ShaderNodeTexWhiteNoise": [
+        "ShaderNodeOctNoiseTex",
+        "OctaneNoiseTexture",
+    ],
+    "ShaderNodeTexGabor": [
+        "ShaderNodeOctNoiseTex",
+        "OctaneNoiseTexture",
     ],
 
     # ── Color / Math ─────────────────────────────────────────────────────
@@ -123,7 +187,11 @@ NODE_TYPE_MAP: dict[str, list[str]] = {
         "OctaneColorCorrection",
     ],
     "ShaderNodeMath": [
+        "ShaderNodeOctMathTex",
+        "ShaderNodeOctMath",
+        "ShaderNodeOctCyclesMath",
         "ShaderNodeOctFloatMathTex",
+        "OctaneMath",
         "OctaneFloatMath",
     ],
     "ShaderNodeMapRange": [
@@ -133,6 +201,22 @@ NODE_TYPE_MAP: dict[str, list[str]] = {
     "ShaderNodeClamp": [
         "ShaderNodeOctClampTex",
         "OctaneClamp",
+    ],
+    "ShaderNodeRGBToBW": [
+        "ShaderNodeOctColorCorrectionTex",
+        "OctaneColorCorrection",
+    ],
+    "ShaderNodeBlackbody": [
+        "ShaderNodeOctBlackBodyEmission",
+        "OctaneBlackBodyEmission",
+    ],
+    "ShaderNodeWavelength": [
+        "ShaderNodeOctRGBColorTex",
+        "OctaneRGBColor",
+    ],
+    "ShaderNodeShaderToRGB": [
+        "ShaderNodeOctMixTex",
+        "OctaneMixTexture",
     ],
 
     # ── Input / Vector ───────────────────────────────────────────────────
@@ -194,6 +278,60 @@ NODE_TYPE_MAP: dict[str, list[str]] = {
         "ShaderNodeOctDirtTex",
         "OctaneDirtTexture",
     ],
+    "ShaderNodeVectorMath": [
+        "ShaderNodeOctVectorMathTex",
+        "ShaderNodeOctVectorMath",
+        "ShaderNodeOctCyclesVectorMath",
+        "OctaneVectorMath",
+        "ShaderNodeOctAddTex",
+        "OctaneAddTexture",
+    ],
+    "ShaderNodeVectorRotate": [
+        "ShaderNodeOct3DTransform",
+        "OctaneTransform3D",
+    ],
+    "ShaderNodeVectorTransform": [
+        "ShaderNodeOct3DTransform",
+        "OctaneTransform3D",
+    ],
+    "ShaderNodeVectorDisplacement": [
+        "ShaderNodeOctDisplacementTex",
+        "OctaneDisplacement",
+    ],
+    "ShaderNodeNormal": [
+        "ShaderNodeOctNormalMapTex",
+        "OctaneNormalTexture",
+    ],
+    "ShaderNodeTangent": [
+        "ShaderNodeOctNormalMapTex",
+        "OctaneNormalTexture",
+    ],
+    "ShaderNodeObjectInfo": [
+        "ShaderNodeOctInstanceColorTex",
+        "OctaneInstanceColor",
+    ],
+    "ShaderNodeCameraData": [
+        "ShaderNodeOctFloatTex",
+    ],
+    "ShaderNodeParticleInfo": [
+        "ShaderNodeOctFloatTex",
+    ],
+    "ShaderNodeHairInfo": [
+        "ShaderNodeOctHairDataTex",
+        "OctaneHairData",
+    ],
+    "ShaderNodeLightFalloff": [
+        "ShaderNodeOctFalloffTex",
+        "OctaneFalloffTexture",
+    ],
+    "ShaderNodeWireframe": [
+        "ShaderNodeOctWireframeTex",
+        "OctaneWireframe",
+    ],
+    "ShaderNodeBevel": [
+        "ShaderNodeOctBevelTex",
+        "OctaneBevelTexture",
+    ],
 
     # ── Volume ───────────────────────────────────────────────────────────
     "ShaderNodeVolumeAbsorption": [
@@ -203,6 +341,14 @@ NODE_TYPE_MAP: dict[str, list[str]] = {
     "ShaderNodeVolumeScatter": [
         "ShaderNodeOctScatterMedium",
         "OctaneScatteringMedium",
+    ],
+    "ShaderNodeVolumePrincipled": [
+        "ShaderNodeOctVolumeMedium",
+        "OctaneVolumeMedium",
+        "ShaderNodeOctAbsorptionMedium",
+    ],
+    "ShaderNodeVolumeInfo": [
+        "ShaderNodeOctFloatTex",
     ],
 }
 
@@ -217,6 +363,7 @@ PASSTHROUGH_TYPES: set[str] = {
     "ShaderNodeNewGeometry",
     "ShaderNodeLightPath",
     "ShaderNodeOutputMaterial",
+    "ShaderNodeGroup",
     "NodeReroute",
     "NodeFrame",
     "NodeGroupInput",
@@ -241,6 +388,38 @@ BLEND_TYPE_MAP: dict[str, list[str]] = {
     "SCREEN": ["ShaderNodeOctMixTex", "OctaneMixTexture"],
     "OVERLAY": ["ShaderNodeOctMixTex", "OctaneMixTexture"],
     "DIFFERENCE": ["ShaderNodeOctSubtractTex", "OctaneSubtractTexture"],
+}
+
+# ---------------------------------------------------------------------------
+# Vector Math node operation → Octane specialized texture node (when mapped to VectorMath)
+# If Octane doesn't have a direct vector math node, we map ADD to AddTex, MUL to MultiplyTex, etc.
+# ---------------------------------------------------------------------------
+
+VECTOR_MATH_OPERATION_MAP: dict[str, list[str]] = {
+    "ADD": ["ShaderNodeOctAddTex", "OctaneAddTexture"],
+    "SUBTRACT": ["ShaderNodeOctSubtractTex", "OctaneSubtractTexture"],
+    "MULTIPLY": ["ShaderNodeOctMultiplyTex", "OctaneMultiplyTexture"],
+    "DIVIDE": ["ShaderNodeOctMixTex", "OctaneMixTexture"],
+    "CROSS_PRODUCT": ["ShaderNodeOctMixTex"],
+    "PROJECT": ["ShaderNodeOctMixTex"],
+    "REFLECT": ["ShaderNodeOctMixTex"],
+    "DOT_PRODUCT": ["ShaderNodeOctFloatMathTex", "OctaneFloatMath"],
+    "DISTANCE": ["ShaderNodeOctFloatMathTex", "OctaneFloatMath"],
+    "LENGTH": ["ShaderNodeOctFloatMathTex", "OctaneFloatMath"],
+    "SCALE": ["ShaderNodeOctMultiplyTex", "OctaneMultiplyTexture"],
+    "NORMALIZE": ["ShaderNodeOctMixTex"],
+    "ABSOLUTE": ["ShaderNodeOctMixTex"],
+    "MINIMUM": ["ShaderNodeOctMixTex"],
+    "MAXIMUM": ["ShaderNodeOctMixTex"],
+    "FLOOR": ["ShaderNodeOctMixTex"],
+    "CEIL": ["ShaderNodeOctMixTex"],
+    "FRACTION": ["ShaderNodeOctMixTex"],
+    "MODULO": ["ShaderNodeOctMixTex"],
+    "WRAP": ["ShaderNodeOctMixTex"],
+    "SNAP": ["ShaderNodeOctMixTex"],
+    "SINE": ["ShaderNodeOctMixTex"],
+    "COSINE": ["ShaderNodeOctMixTex"],
+    "TANGENT": ["ShaderNodeOctMixTex"],
 }
 
 # ---------------------------------------------------------------------------
@@ -289,22 +468,29 @@ INPUT_MAP: dict[str, dict[str, list[str]]] = {
         "Base Color":           ["Albedo color", "Albedo", "Diffuse"],
         "Metallic":             ["Metallic", "Metallic float"],
         "Roughness":            ["Roughness", "Roughness float"],
+        "Diffuse Roughness":    ["Roughness", "Roughness float", "Diffuse roughness"],
         "Specular IOR Level":   ["Specular", "Specular float"],
-        "Specular Tint":        ["Specular tint", "Specular map"],
+        "Specular Tint":        ["Specular tint", "Specular map", "Specular color"],
         "IOR":                  ["Dielectric IOR", "Index", "IOR"],
         "Transmission Weight":  ["Transmission", "Transmission float"],
         "Alpha":                ["Opacity", "Opacity float"],
         "Normal":               ["Normal", "Bump", "ShaderNormal"],
+        "Tangent":              ["Anisotropy rotation", "Rotation"],
         "Coat Weight":          ["Coating", "Coating float"],
         "Coat Roughness":       ["Coating roughness", "Coating roughness float"],
         "Coat Normal":          ["Coating normal", "Coating bump"],
+        "Coat IOR":             ["Coating IOR"],
+        "Coat Tint":            ["Coating", "Coating color"],
         "Sheen Weight":         ["Sheen", "Sheen float"],
         "Sheen Roughness":      ["Sheen roughness", "Sheen roughness float"],
+        "Sheen Tint":           ["Sheen", "Sheen color", "Sheen tint"],
         "Emission Color":       ["Emission", "Emission color"],
         "Emission Strength":    ["Emission power", "Emission weight"],
         "Subsurface Weight":    ["SSS", "Subsurface"],
         "Subsurface Radius":    ["Absorption", "Medium radius"],
         "Subsurface Scale":     ["Density", "Medium scale"],
+        "Subsurface IOR":       ["Index", "IOR"],
+        "Subsurface Anisotropy": ["Anisotropy", "Subsurface anisotropy"],
         "Anisotropic":          ["Anisotropy", "Anisotropy float"],
         "Anisotropic Rotation": ["Anisotropy rotation", "Rotation"],
         "Thin Film Thickness":  ["Film width", "Thin film thickness"],
@@ -435,8 +621,8 @@ INPUT_MAP: dict[str, dict[str, list[str]]] = {
         "Fac":   ["Amount", "Factor"],
     },
     "ShaderNodeMath": {
-        "Value":     ["Input1", "Value", "A"],
-        "Value_001": ["Input2", "Value2", "B"],
+        "Value":     ["Input1", "Value1", "Value 1", "Input", "Value", "A"],
+        "Value_001": ["Input2", "Value2", "Value 2", "Value2", "B"],
     },
     "ShaderNodeMapRange": {
         "Value":    ["Input", "Value"],
@@ -479,6 +665,59 @@ INPUT_MAP: dict[str, dict[str, list[str]]] = {
         "Surface":      ["Surface", "Shader", "Material"],
         "Volume":       ["Volume", "Medium"],
         "Displacement": ["Displacement", "Height"],
+    },
+
+    # ── New Nodes ────────────────────────────────────────────────────────
+    "ShaderNodeBsdfMetallic": {
+        "Base Color": ["Albedo color", "Albedo", "Diffuse"],
+        "Edge Tint":  ["Specular", "Specular color", "Specular map"],
+        "Roughness":  ["Roughness", "Roughness float"],
+        "Anisotropy": ["Anisotropy", "Anisotropy float"],
+        "Rotation":   ["Anisotropy rotation", "Rotation"],
+        "Normal":     ["Normal", "Bump", "ShaderNormal"],
+        "Tangent":    ["Anisotropy rotation", "Rotation"],
+    },
+    "ShaderNodeBsdfSheen": {
+        "Color":      ["Albedo color", "Albedo", "Diffuse"],
+        "Roughness":  ["Roughness", "Roughness float"],
+        "Normal":     ["Normal", "Bump", "ShaderNormal"],
+    },
+    "ShaderNodeBsdfToon": {
+        "Color":      ["Albedo color", "Albedo", "Diffuse"],
+        "Size":       ["Roughness", "Roughness float"],
+        "Smooth":     ["Roughness", "Roughness float"],
+        "Normal":     ["Normal", "Bump", "ShaderNormal"],
+    },
+    "ShaderNodeSubsurfaceScattering": {
+        "Color":      ["Albedo color", "Albedo", "Diffuse", "Absorption"],
+        "Scale":      ["Density", "Medium scale"],
+        "Radius":     ["Absorption", "Medium radius"],
+        "IOR":        ["Index", "IOR"],
+        "Roughness":  ["Roughness", "Roughness float"],
+        "Anisotropy": ["Anisotropy", "Anisotropy float"],
+        "Normal":     ["Normal", "Bump", "ShaderNormal"],
+    },
+    "ShaderNodeBackground": {
+        "Color":    ["Diffuse", "Emission", "Albedo color"],
+        "Strength": ["Emission power", "Power"],
+    },
+    "ShaderNodeTexEnvironment": {
+        "Vector": ["Transform", "Projection", "UV", "UVTransform"],
+    },
+    "ShaderNodeVectorMath": {
+        "Vector":    ["Texture1", "Color1", "Input1", "A"],
+        "Vector_001": ["Texture2", "Color2", "Input2", "B"],
+        "Scale":     ["Amount", "Factor", "Value2", "B"],
+    },
+    "ShaderNodeBlackbody": {
+        "Temperature": ["Temperature"],
+    },
+    "ShaderNodeVolumePrincipled": {
+        "Color":            ["Absorption", "Color"],
+        "Density":          ["Density", "Density float"],
+        "Anisotropy":       ["Phase", "Anisotropy"],
+        "Emission Color":   ["Emission", "Emission color"],
+        "Emission Strength":["Emission power", "Power"],
     },
 }
 
@@ -566,7 +805,7 @@ OUTPUT_MAP: dict[str, dict[str, list[str]]] = {
         "Color": ["OutTex", "Texture out", "Output"],
     },
     "ShaderNodeMath": {
-        "Value": ["OutTex", "Texture out", "Output", "Value"],
+        "Value": ["OutTex", "Texture out", "Output", "Value", "Result"],
     },
     "ShaderNodeMapRange": {
         "Result": ["OutTex", "Texture out", "Output"],
@@ -596,6 +835,9 @@ OUTPUT_MAP: dict[str, dict[str, list[str]]] = {
         "Normal": ["OutTex", "Texture out", "Normal", "Output"],
     },
     "ShaderNodeDisplacement": {
+        "Displacement": ["OutTex", "Texture out", "Output"],
+    },
+    "ShaderNodeVectorDisplacement": {
         "Displacement": ["OutTex", "Texture out", "Output"],
     },
     "ShaderNodeRGB": {
@@ -628,6 +870,48 @@ OUTPUT_MAP: dict[str, dict[str, list[str]]] = {
         "Volume": ["OutMedium", "Medium out", "Output"],
     },
     "ShaderNodeVolumeScatter": {
+        "Volume": ["OutMedium", "Medium out", "Output"],
+    },
+    
+    # ── New Nodes ────────────────────────────────────────────────────────
+    "ShaderNodeBsdfMetallic": {
+        "BSDF": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeBsdfSheen": {
+        "BSDF": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeBsdfToon": {
+        "BSDF": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeBsdfHair": {
+        "BSDF": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeBsdfHairPrincipled": {
+        "BSDF": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeBsdfRayPortal": {
+        "BSDF": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeSubsurfaceScattering": {
+        "BSSRDF": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeBackground": {
+        "Background": ["OutMat", "Material out", "Output", "Emission"],
+    },
+    "ShaderNodeHoldout": {
+        "Holdout": ["OutMat", "Material out", "Output"],
+    },
+    "ShaderNodeTexEnvironment": {
+        "Color": ["OutTex", "Texture out", "Output"],
+    },
+    "ShaderNodeVectorMath": {
+        "Vector": ["OutTex", "Texture out", "Output", "Value"],
+        "Value": ["OutTex", "Texture out", "Output", "Value"],
+    },
+    "ShaderNodeBlackbody": {
+        "Color": ["OutTex", "Texture out", "Output", "Emission"],
+    },
+    "ShaderNodeVolumePrincipled": {
         "Volume": ["OutMedium", "Medium out", "Output"],
     },
 }
